@@ -15,8 +15,9 @@ function Room(data) {
 		x: data.size.x,
 		y: data.size.y
 	};
+	var mapPosition = data.mapPosition;
 
-	var doors = data.doors;
+	var doors = null;
 
 	var entities = data.entities;
 	var surfaces = data.surfaces;
@@ -26,150 +27,283 @@ function Room(data) {
 
 	entities.insert(player, 0);
 
-	if (doors.n) {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: 100,
-			y: 100,
-			x2: size.x / 2 - 60,
-			y2: 100
-		}));
+	function nextRoomTrigger(door) {
+		if (door.data.doorLocation === 'n') {
+			player.data.nextX = size.x / 2 - player.bounds.radius;
+			player.data.nextY = size.y - player.bounds.radius * 3;
+		}
+		else if (door.data.doorLocation === 's') {
+			player.data.nextX = size.x / 2 - player.bounds.radius;
+			player.data.nextY = player.bounds.radius * 3;
+		}
+		else if (door.data.doorLocation === 'e') {
+			player.data.nextX = player.bounds.radius * 3;
+			player.data.nextY = size.y / 2 - player.bounds.radius;
+		}
+		else if (door.data.doorLocation === 'w') {
+			player.data.nextX = size.x - player.bounds.radius * 3;
+			player.data.nextY = size.y / 2 - player.bounds.radius;
+		}
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x / 2 + 60,
-			y: 100,
-			x2: size.x - 100,
-			y2: 100
-		}));
-	}
-	else {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: 100,
-			y: 100,
-			x2: size.x - 100,
-			y2: 100,
-			/*drawFunc: function (surface, ctx) {
-				var path = new Path2D();
-				path.moveTo(surface.x, surface.y);
-				path.lineTo(surface.x2, surface.y2);
-				path.lineTo(surface.x2 + 1, surface.y2);
-				path.lineTo(surface.x + 1, surface.y);
-				ctx.fillStyle = '#0000FF';
-				ctx.fill(path);
-			}*/
-		}));
+		self.moveNext = door.data.room;
 	}
 
-	if (doors.e) {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: 100,
-			x2: size.x - 100,
-			y2: size.y / 2 - 60
-		}));
+	self.startRoom = function() {
+		if (player.data) {
+			player.x = player.data.nextX;
+			player.y = player.data.nextY;
+			player.data.nextRoom = null;
+		}
+	};
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: size.y / 2 - 60,
-			x2: size.x,
-			y2: size.y / 2 - 60
-		}));
+	self.addWalls = function(doorLocations) {
+		doors = doorLocations;
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: size.y / 2 + 60,
-			x2: size.x - 100,
-			y2: size.y - 100
-		}));
+		if (doors.n) {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: 100,
+				x2: size.x / 2 - 60,
+				y2: 100
+			}));
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x,
-			y: size.y / 2 + 60,
-			x2: size.x - 100,
-			y2: size.y / 2 + 60
-		}));
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 - 60,
+				y: 100,
+				x2: size.x / 2 - 60,
+				y2: 0
+			}));
 
-		entities.append(entityFactory.create({
-			type: types.openDoor,
-			x: size.x - 30,
-			y: size.y / 2 - 30,
-			bounds: boundsFactory.createCircle({
-				radius: 30
-			}),
-			causesCollisions: true,
-			drawFunc: function (entity, roomPosition, ctx) {
-				drawUtility.circle(ctx, entity.x - roomPosition.x, entity.y - roomPosition.y, entity.bounds.radius, '#00FFFF');
-			}
-		}));
-	}
-	else {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: 100,
-			x2: size.x - 100,
-			y2: size.y - 100
-		}));
-	}
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 + 60,
+				y: 0,
+				x2: size.x / 2 + 60,
+				y2: 100
+			}));
 
-	if (doors.s) {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: size.y - 100,
-			x2: size.x / 2 + 60,
-			y2: size.y - 100
-		}));
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 + 60,
+				y: 100,
+				x2: size.x - 100,
+				y2: 100
+			}));
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x / 2 - 60,
-			y: size.y - 100,
-			x2: 100,
-			y2: size.y - 100
-		}));
-	}
-	else {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: size.x - 100,
-			y: size.y - 100,
-			x2: 100,
-			y2: size.y - 100
-		}));
-	}
+			surfaces.append(surfaceFactory.create({
+				type: types.openDoor,
+				x: size.x / 2 - 60,
+				y: 0,
+				x2: size.x / 2 + 60,
+				y2: 0,
+				data: {
+					nextRoomTrigger: nextRoomTrigger,
+					room: doors.n,
+					doorLocation: 'n'
+				}
+			}));
+		}
+		else {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: 100,
+				x2: size.x - 100,
+				y2: 100,
+				/*drawFunc: function (surface, ctx) {
+					var path = new Path2D();
+					path.moveTo(surface.x, surface.y);
+					path.lineTo(surface.x2, surface.y2);
+					path.lineTo(surface.x2 + 1, surface.y2);
+					path.lineTo(surface.x + 1, surface.y);
+					ctx.fillStyle = '#0000FF';
+					ctx.fill(path);
+				}*/
+			}));
+		}
 
-	if (doors.w) {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: 100,
-			y: size.y - 100,
-			x2: 100,
-			y2: size.y / 2 + 60
-		}));
+		if (doors.e) {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: 100,
+				x2: size.x - 100,
+				y2: size.y / 2 - 60
+			}));
 
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: 100,
-			y: size.y / 2 + 0,
-			x2: 100,
-			y2: 100
-		}));
-	}
-	else {
-		surfaces.append(surfaceFactory.create({
-			type: types.wall,
-			x: 100,
-			y: size.y - 100,
-			x2: 100,
-			y2: 100
-		}));
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: size.y / 2 - 60,
+				x2: size.x,
+				y2: size.y / 2 - 60
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x,
+				y: size.y / 2 + 60,
+				x2: size.x - 100,
+				y2: size.y / 2 + 60
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: size.y / 2 + 60,
+				x2: size.x - 100,
+				y2: size.y - 100
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.openDoor,
+				x: size.x,
+				y: size.y / 2 - 60,
+				x2: size.x,
+				y2: size.y / 2 + 60,
+				data: {
+					nextRoomTrigger: nextRoomTrigger,
+					room: doors.e,
+					doorLocation: 'e'
+				}
+			}));
+
+			//entities.append(entityFactory.create({
+			//	type: types.openDoor,
+			//	x: size.x - 30,
+			//	y: size.y / 2 - 30,
+			//	bounds: boundsFactory.createCircle({
+			//		radius: 30
+			//	}),
+			//	causesCollisions: true,
+			//	drawFunc: function (entity, roomPosition, ctx) {
+			//		drawUtility.circle(ctx, entity.x - roomPosition.x, entity.y - roomPosition.y, entity.bounds.radius, '#00FFFF');
+			//	}
+			//}));
+		}
+		else {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: 100,
+				x2: size.x - 100,
+				y2: size.y - 100
+			}));
+		}
+
+		if (doors.s) {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: size.y - 100,
+				x2: size.x / 2 + 60,
+				y2: size.y - 100
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 + 60,
+				y: size.y - 100,
+				x2: size.x / 2 + 60,
+				y2: size.y
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 - 60,
+				y: size.y,
+				x2: size.x / 2 - 60,
+				y2: size.y - 100
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x / 2 - 60,
+				y: size.y - 100,
+				x2: 100,
+				y2: size.y - 100
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.openDoor,
+				x: size.x / 2 + 60,
+				y: size.y,
+				x2: size.x / 2 - 60,
+				y2: size.y,
+				data: {
+					nextRoomTrigger: nextRoomTrigger,
+					room: doors.s,
+					doorLocation: 's'
+				}
+			}));
+		}
+		else {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: size.x - 100,
+				y: size.y - 100,
+				x2: 100,
+				y2: size.y - 100
+			}));
+		}
+
+		if (doors.w) {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: size.y - 100,
+				x2: 100,
+				y2: size.y / 2 + 60
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: size.y / 2 + 60,
+				x2: 0,
+				y2: size.y / 2 + 60
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 0,
+				y: size.y / 2 - 60,
+				x2: 100,
+				y2: size.y / 2 - 60
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: size.y / 2 - 60,
+				x2: 100,
+				y2: 100
+			}));
+
+			surfaces.append(surfaceFactory.create({
+				type: types.openDoor,
+				x: 0,
+				y: size.y / 2 + 60,
+				x2: 0,
+				y2: size.y / 2 - 60,
+				data: {
+					nextRoomTrigger: nextRoomTrigger,
+					room: doors.w,
+					doorLocation: 'w'
+				}
+			}));
+		}
+		else {
+			surfaces.append(surfaceFactory.create({
+				type: types.wall,
+				x: 100,
+				y: size.y - 100,
+				x2: 100,
+				y2: 100
+			}));
+		}
 	}
 
 	self.update = function(buttonsPressed, elapsedTime) {
@@ -194,6 +328,9 @@ function Room(data) {
 
 		for (var i = 0; i < removals.length; i++)
 			entities.removeAt(removals[i] - i); // (- i) on purpose
+
+		if (player.data && player.data.nextRoom)
+			self.moveNext = player.data.nextRoom;
 	};
 
 	self.draw = function (ctx, viewPortSize) {
@@ -229,12 +366,39 @@ function Room(data) {
 			y: size.y - 200
 		}, '#CCCCCC');
 
+		if (doors.n) {
+			drawUtility.rectangle(ctx, {
+				x: size.x / 2 - 60 - cameraPosition.x,
+				y: -cameraPosition.y
+			}, {
+				x: 120,
+				y: 110
+			}, '#CCCCCC');
+		}
+		if (doors.s) {
+			drawUtility.rectangle(ctx, {
+				x: size.x / 2 - 60 - cameraPosition.x,
+				y: size.y - 110 - cameraPosition.y
+			}, {
+				x: 120,
+				y: 110
+			}, '#CCCCCC');
+		}
 		if (doors.e) {
 			drawUtility.rectangle(ctx, {
-				x: size.x - 100 - cameraPosition.x,
+				x: size.x - 110 - cameraPosition.x,
 				y: size.y / 2 - 60 - cameraPosition.y
 			}, {
-				x: 100,
+				x: 110,
+				y: 120
+			}, '#CCCCCC');
+		}
+		if (doors.w) {
+			drawUtility.rectangle(ctx, {
+				x: -cameraPosition.x,
+				y: size.y / 2 - 60 - cameraPosition.y
+			}, {
+				x: 110,
 				y: 120
 			}, '#CCCCCC');
 		}

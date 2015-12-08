@@ -31,6 +31,9 @@ function Controller(entity, data) {
 
 		if (rule.damages && hpModule)
 			hpModule.damages(entity, other, rule);
+
+		if (rule.callback)
+			rule.callback(entity, other);
 	};
 
 	self.collision = function (other, rule) {

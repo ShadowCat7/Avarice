@@ -20,7 +20,10 @@ var player = null;
 
 function update(buttonsPressed, elapsedTime) {
 	if (currentRoom.moveNext) {
-		currentRoom = currentRoom.moveNext;
+		var nextRoom = currentRoom.moveNext;
+		currentRoom.moveNext = null;
+		currentRoom = nextRoom;
+		currentRoom.startRoom();
 	}
 
 	currentRoom.update(buttonsPressed, elapsedTime);
@@ -38,7 +41,7 @@ function draw() {
 	});
 }
 
-function generateRoom(doors) {
+function generateRoom(mapPosition) {
 	var entities = linkedListFactory.create();
 	var surfaces = linkedListFactory.create();
 
@@ -83,7 +86,7 @@ function generateRoom(doors) {
 			x: 1000,
 			y: 1000
 		},
-		doors: doors,
+		mapPosition: mapPosition,
 		entities: entities,
 		surfaces: surfaces,
 		player: player
@@ -117,7 +120,31 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	currentRoom = generateRoom({ e: generateRoom({}) });
+	var roomMap = [];
+	for (var i = 0; i < 6; i++)
+		roomMap.push([generateRoom({ x: 0, y: i })])
+	
+	for (i = 0; i < roomMap.length; i++) {
+		for (j = 0; j < roomMap[i].length; j++) {
+			var doorLocations = {};
+			
+			if (i > 0 && roomMap[i - 1][j])
+				doorLocations.w = roomMap[i - 1][j];
+
+			if (i < roomMap.length - 1 && roomMap[i + 1][j])
+				doorLocations.e = roomMap[i + 1][j];
+
+			if (j > 0 && roomMap[i][j - 1])
+				doorLocations.n = roomMap[i][j - 1];
+
+			if (j < roomMap[i].length - 1 && roomMap[i][j + 1])
+				doorLocations.s = roomMap[i][j + 1];
+
+			roomMap[i][j].addWalls(doorLocations);
+		}
+	}
+
+	currentRoom = roomMap[0][0];
 
 	engine = engine.create(canvas, update, draw);
 	engine.start();

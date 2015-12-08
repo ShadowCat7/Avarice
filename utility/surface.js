@@ -19,6 +19,8 @@ function Surface(data) {
 
 	self.type = data.type;
 
+	self.data = data.data;
+
 	self.draw = function (ctx, roomPosition) {
 		if (drawFunc)
 			drawFunc(self, roomPosition, ctx);

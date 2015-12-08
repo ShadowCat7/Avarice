@@ -106,7 +106,10 @@ playerRules[types.wall] = ruleFactory.create({
 
 playerRules[types.openDoor] = ruleFactory.create({
 	canCollide: false,
-	damages: false
+	damages: false,
+	callback: function (player, openDoor) {
+		openDoor.data.nextRoomTrigger(openDoor);
+	}
 });
 
 var playerBulletRules = {};
