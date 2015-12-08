@@ -1,0 +1,11 @@
+App.config
+
+*.csproj
+*.suo
+*.sln
+
+bin/
+obj/
+node_modules/
+
+server.js
