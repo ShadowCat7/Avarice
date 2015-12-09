@@ -322,7 +322,7 @@ function Room(data) {
 		});
 
 		entities.forEach(function (entity, index) {
-			if (entity.data.hp && entity.data.hp.amount <= 0)
+			if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0)
 				removals.push(index);
 		});
 
@@ -410,6 +410,22 @@ function Room(data) {
 		surfaces.forEach(function (surface) {
 			surface.draw(ctx, cameraPosition);
 		});
+
+		for (var i = 0; i < player.data.hp.amount; i++)
+			drawUtility.circle(ctx, 10 + 20 * i, 10, 5, '#FF0000');
+
+		if (player.data.ai.itemDisplayTimer) {
+			var mostRecentItem = player.data.ai.items[player.data.ai.items.length - 1];
+			ctx.font = "30px Arial";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText(mostRecentItem.name, viewPortSize.x / 2, 150); 
+
+			ctx.font = "20px Arial";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText(mostRecentItem.subtext, viewPortSize.x / 2, 200); 
+		}
 	}
 }
 

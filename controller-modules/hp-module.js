@@ -2,7 +2,7 @@ function create(data) {
 	return {
 		init: function (entity) {
 			entity.data.hp = {
-				amount: data.amount,
+				amount: entity.stats ? entity.stats.health : data.amount,
 				timer: data.timer
 			};
 		},
@@ -12,7 +12,7 @@ function create(data) {
 		damages: function (entity, other, rule) {
 			if (entity.data.hp.timer.isSet()) {
 				entity.data.hp.timer.reset();
-				entity.data.hp.amount--;
+				entity.data.hp.amount -= other.stats ? other.stats.contactDamage : 1;
 			}
 		}
 	};

@@ -4,6 +4,7 @@ var rules = require('./rules');
 
 function Controller(entity, data) {
 	var self = this;
+
 	if (data) {
 		var hpModule = data.hpModule;
 		var movementModule = data.movementModule;

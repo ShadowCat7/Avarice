@@ -1,6 +1,10 @@
 var vector = require('../utility/vector');
 var rules = require('../rules');
 
+function getMaxSpeed(entity) {
+	return entity.stats ? entity.stats.speed : entity.data.movement.maxSpeed;
+}
+
 function create(data) {
 	return {
 		init: function (entity) {
@@ -33,9 +37,11 @@ function create(data) {
 				}
 			}
 
-			if (entity.data.movement.velocity.magnitude > entity.data.movement.maxSpeed) {
+			var maxSpeed = getMaxSpeed(entity);
+
+			if (entity.data.movement.velocity.magnitude > maxSpeed) {
 				entity.data.movement.velocity = vector.create({
-					magnitude: entity.data.movement.maxSpeed,
+					magnitude: maxSpeed,
 					direction: entity.data.movement.velocity.direction
 				});
 			}

@@ -5,5 +5,6 @@ module.exports = {
 	player: 'player',
 	playerBullet: 'player-bullet',
 	wall: 'wall',
-	openDoor: 'open-door'
+	openDoor: 'open-door',
+	item: 'item'
 };

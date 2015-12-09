@@ -6,11 +6,31 @@ var hpModuleFactory = require('../controller-modules/hp-module');
 var movementModuleFactory = require('../controller-modules/movement-module');
 var types = require('../types');
 var drawUtility = require('../utility/draw-utility');
+var statsFactory = require('../stats');
 
 module.exports = {
 	init: function (player) {
+		player.stats = statsFactory.create({
+			health: 4,
+			contactDamage: 0,
+			rateOfFire: 0.5,
+			bulletSpeed: 10,
+			bulletDamage: 1,
+			speed: 8
+		});
+
 		player.data.ai = {
-			timer: timerFactory.create(0.5, true)
+			rateOfFireTimer: timerFactory.create(player.stats.rateOfFire, true),
+			items: [],
+			takeItem: function (item) {
+				player.data.ai.items.push(item);
+				player.stats = statsFactory.add(player.stats, item.stats);
+				player.data.ai.itemDisplayTimer = timerFactory.create(3, false);
+				
+				if (item.stats.rateOfFire) {
+					player.data.ai.rateOfFireTimer = timerFactory.create(player.stats.rateOfFire, false);
+				}
+			}
 		};
 	},
 	update: function (updateData, player) {
@@ -51,11 +71,11 @@ module.exports = {
 			}));
 		}
 
-		if (player.data.ai.timer.isSet()) {
+		if (player.data.ai.rateOfFireTimer.isSet()) {
 			var isBulletCreated = false;
 
 			var movementModuleOptions = {
-				maxSpeed: 10
+				maxSpeed: player.stats.bulletSpeed
 			};
 
 			var bulletOptions = {
@@ -80,7 +100,7 @@ module.exports = {
 			if (updateData.buttonsPressed[38]) {
 				movementModuleOptions.velocity = vector.create({
 					x: 0,
-					y: -30
+					y: -player.stats.bulletSpeed
 				});
 				bulletOptions.y -= player.bounds.radius + 10;
 				isBulletCreated = true;
@@ -90,7 +110,7 @@ module.exports = {
 			if (updateData.buttonsPressed[40]) {
 				movementModuleOptions.velocity = vector.create({
 					x: 0,
-					y: 30
+					y: player.stats.bulletSpeed
 				});
 				bulletOptions.y += player.bounds.radius + 10;
 				isBulletCreated = true;
@@ -99,7 +119,7 @@ module.exports = {
 			// Left - 37
 			if (updateData.buttonsPressed[37]) {
 				movementModuleOptions.velocity = vector.create({
-					x: -30,
+					x: -player.stats.bulletSpeed,
 					y: 0
 				});
 				bulletOptions.x -= player.bounds.radius + 10;
@@ -109,7 +129,7 @@ module.exports = {
 			// Right - 39
 			if (updateData.buttonsPressed[39]) {
 				movementModuleOptions.velocity = vector.create({
-					x: 30,
+					x: player.stats.bulletSpeed,
 					y: 0
 				});
 				bulletOptions.x += player.bounds.radius + 10;
@@ -118,12 +138,24 @@ module.exports = {
 
 			if (isBulletCreated) {
 				bulletOptions.controllerData.movementModule = movementModuleFactory.create(movementModuleOptions);
+				bulletOptions.stats = statsFactory.create({
+					health: 1,
+					contactDamage: player.stats.bulletDamage,
+					speed: player.stats.bulletSpeed
+				});
 				updateData.entities.append(entityFactory.create(bulletOptions));
-				player.data.ai.timer.reset();
+				player.data.ai.rateOfFireTimer.reset();
 			}
 		}
 		else {
-			player.data.ai.timer.update(updateData.elapsedTime);
+			player.data.ai.rateOfFireTimer.update(updateData.elapsedTime);
+		}
+
+		if (player.data.ai.itemDisplayTimer) {
+			if (player.data.ai.itemDisplayTimer.isSet())
+				player.data.ai.itemDisplayTimer = null;
+			else
+				player.data.ai.itemDisplayTimer.update(updateData.elapsedTime);
 		}
 
 		return {

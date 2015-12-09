@@ -4,8 +4,13 @@ module.exports = {
 	collision: function (type1, type2) {
 		var ruleSet = collisionRules.rules[type1];
 		if (!ruleSet)
-			return ruleSet;
+			return null;
 
-		return ruleSet[type2].data;
+		var rule = ruleSet[type2];
+
+		if (!rule)
+			return null;
+
+		return rule.data;
 	}
 };

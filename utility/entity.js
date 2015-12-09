@@ -15,6 +15,8 @@ function Entity(data) {
 
 	self.data = {};
 
+	self.stats = null;
+
 	self.controller = controllerFactory.create(self, data.controllerData);
 
 	self.draw = function (ctx, roomPosition) {

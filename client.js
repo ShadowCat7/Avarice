@@ -12,6 +12,7 @@ var playerAi = require('./ais/player-ai');
 var followPlayerAi = require('./ais/follow-player-ai');
 var types = require('./types');
 var roomFactory = require('./room');
+var itemGenerator = require('./items/items.js');
 
 var canvas = null;
 var fpsLabel = null;
@@ -57,6 +58,22 @@ function generateRoom(mapPosition) {
 			drawUtility.circle(ctx, entity.x - roomPosition.x, entity.y - roomPosition.y, entity.bounds.radius, '#00FF00');
 		}
 	}));
+
+	var itemEntity = entityFactory.create({
+		type: types.item,
+		x: 600,
+		y: 700,
+		bounds: boundsFactory.createCircle({
+			radius: 20
+		}),
+		causesCollisions: true,
+		drawFunc: function (entity, roomPosition, ctx) {
+			drawUtility.circle(ctx, entity.x - roomPosition.x, entity.y - roomPosition.y, entity.bounds.radius, '#FFFFFF');
+		}
+	});
+
+	itemEntity.data.item = itemGenerator.getItem();
+	entities.append(itemEntity);
 
 	entities.append(entityFactory.create({
 		type: types.enemy,

@@ -112,6 +112,15 @@ playerRules[types.openDoor] = ruleFactory.create({
 	}
 });
 
+playerRules[types.item] = ruleFactory.create({
+	canCollide: false,
+	damages: false,
+	callback: function (player, item) {
+		player.data.ai.takeItem(item.data.item);
+		item.data.remove = true;
+	}
+});
+
 var playerBulletRules = {};
 rules[types.playerBullet] = playerBulletRules;
 playerBulletRules[types.neutral] = ruleFactory.create({
