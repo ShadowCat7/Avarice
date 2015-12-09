@@ -15,7 +15,7 @@ function Room(data) {
 		x: data.size.x,
 		y: data.size.y
 	};
-	var mapPosition = data.mapPosition;
+	self.mapPosition = data.mapPosition;
 
 	var doors = null;
 
@@ -412,7 +412,7 @@ function Room(data) {
 		});
 
 		for (var i = 0; i < player.data.hp.amount; i++)
-			drawUtility.circle(ctx, 10 + 20 * i, 10, 5, '#FF0000');
+			drawUtility.circle(ctx, 10 + 24 * i, 10, 7, '#FF0000');
 
 		if (player.data.ai.itemDisplayTimer) {
 			var mostRecentItem = player.data.ai.items[player.data.ai.items.length - 1];

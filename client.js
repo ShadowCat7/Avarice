@@ -18,6 +18,7 @@ var canvas = null;
 var fpsLabel = null;
 var currentRoom = null;
 var player = null;
+var roomMap = null;
 
 function update(buttonsPressed, elapsedTime) {
 	if (currentRoom.moveNext) {
@@ -40,6 +41,27 @@ function draw() {
 		x: canvas.width,
 		y: canvas.height
 	});
+
+	drawUtility.rectangle(ctx, {
+		x: canvas.width - 160,
+		y: 0
+	}, {
+		x: 160,
+		y: 100
+	}, '#998899');
+
+	for (var i = 0; i < roomMap.length; i++) {
+		for (var j = 0; j < roomMap[i].length; j++) {
+			var drawingRoom = roomMap[i][j];
+			drawUtility.rectangle(ctx, {
+				x: canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x),
+				y: 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y),
+			}, {
+				x: 18,
+				y: 12
+			}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+		}
+	}
 }
 
 function generateRoom(mapPosition) {
@@ -137,9 +159,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	var roomMap = [];
+	roomMap = [];
 	for (var i = 0; i < 6; i++)
-		roomMap.push([generateRoom({ x: 0, y: i })])
+		roomMap.push([generateRoom({ x: i, y: 0 })])
 	
 	for (i = 0; i < roomMap.length; i++) {
 		for (j = 0; j < roomMap[i].length; j++) {
