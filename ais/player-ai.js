@@ -40,7 +40,7 @@ module.exports = {
 		});
 
 		// W
-		if (updateData.buttonsPressed[87]) {
+		if (updateData.buttonsPressed[87] || updateData.buttonsPressed[188]) {
 			acceleration = acceleration.add(vector.create({
 				x: 0,
 				y: -1
@@ -48,7 +48,7 @@ module.exports = {
 		}
 
 		// S
-		if (updateData.buttonsPressed[83]) {
+		if (updateData.buttonsPressed[83] || updateData.buttonsPressed[79]) {
 			acceleration = acceleration.add(vector.create({
 				x: 0,
 				y: 1
@@ -56,7 +56,7 @@ module.exports = {
 		}
 
 		// A
-		if (updateData.buttonsPressed[65]) {
+		if (updateData.buttonsPressed[65] || updateData.buttonsPressed[69]) {
 			acceleration = acceleration.add(vector.create({
 				x: -1,
 				y: 0
