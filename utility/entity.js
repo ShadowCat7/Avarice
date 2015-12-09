@@ -13,9 +13,9 @@ function Entity(data) {
 
 	self.type = data.type;
 
-	self.data = {};
+	self.data = data.data || {};
 
-	self.stats = null;
+	self.stats = data.stats;
 
 	self.controller = controllerFactory.create(self, data.controllerData);
 

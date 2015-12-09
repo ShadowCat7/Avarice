@@ -29,7 +29,7 @@ function create(data) {
 				else if (absoluteVelocityMagnitude > 1) {
 					entity.data.movement.velocity = entity.data.movement.velocity.addMagnitude(-1 * updateData.elapsedTime * 1000 / 17);
 				}
-				else if (absoluteVelocityMagnitude < 1) {
+				else if (absoluteVelocityMagnitude <= 1) {
 					entity.data.movement.velocity = vector.create({
 						magnitude: 0,
 						direction: entity.data.movement.velocity.direction

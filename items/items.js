@@ -1,9 +1,9 @@
 var items = [
-	item('Adderol', 'Can\'t stop shaking', {
+	item('Adderol', 'Rate of fire up, speed up', {
 		rateOfFire: -0.1,
 		speed: 2
 	}),
-	item('Sniper Rifle', 'Headshot', {
+	item('Sniper Rifle', 'Rate of fire down, bullet speed up', {
 		rateOfFire: 0.2,
 		bulletSpeed: 10
 	})

@@ -3,6 +3,7 @@ var entityFactory = require('./utility/entity');
 var boundsFactory = require('./utility/bounds');
 var types = require('./types');
 var drawUtility = require('./utility/draw-utility');
+var vector = require('./utility/vector');
 
 function Room(data) {
 	var self = this;
@@ -23,37 +24,50 @@ function Room(data) {
 	var surfaces = data.surfaces;
 	var player = data.player;
 
+	var isPaused = false;
+	var wasPausedLastTick = false;
+
 	self.moveNext = false;
 
 	entities.insert(player, 0);
 
+	var roomEnteredCallback = data.roomEnteredCallback;
+
 	function nextRoomTrigger(door) {
-		if (door.data.doorLocation === 'n') {
-			player.data.nextX = size.x / 2 - player.bounds.radius;
-			player.data.nextY = size.y - player.bounds.radius * 3;
-		}
-		else if (door.data.doorLocation === 's') {
-			player.data.nextX = size.x / 2 - player.bounds.radius;
-			player.data.nextY = player.bounds.radius * 3;
-		}
-		else if (door.data.doorLocation === 'e') {
-			player.data.nextX = player.bounds.radius * 3;
-			player.data.nextY = size.y / 2 - player.bounds.radius;
-		}
-		else if (door.data.doorLocation === 'w') {
-			player.data.nextX = size.x - player.bounds.radius * 3;
-			player.data.nextY = size.y / 2 - player.bounds.radius;
-		}
+		player.data.nextSide = door.data.doorLocation;
 
 		self.moveNext = door.data.room;
 	}
 
 	self.startRoom = function() {
 		if (player.data) {
-			player.x = player.data.nextX;
-			player.y = player.data.nextY;
-			player.data.nextRoom = null;
+			if (player.data.nextSide === 'n') {
+				player.x = size.x / 2 - player.bounds.radius;
+				player.y = size.y - player.bounds.radius * 3;
+			}
+			else if (player.data.nextSide === 's') {
+				player.x = size.x / 2 - player.bounds.radius;
+				player.y = player.bounds.radius;
+			}
+			else if (player.data.nextSide === 'e') {
+				player.x = player.bounds.radius;
+				player.y = size.y / 2 - player.bounds.radius;
+			}
+			else if (player.data.nextSide === 'w') {
+				player.x = size.x - player.bounds.radius * 3;
+				player.y = size.y / 2 - player.bounds.radius;
+			}
+
+			player.data.movement.velocity = vector.create({
+				x: 0,
+				y: 0
+			});
+
+			player.data.nextSide = null;
 		}
+
+		if (roomEnteredCallback)
+			roomEnteredCallback();
 	};
 
 	self.addWalls = function(doorLocations) {
@@ -307,30 +321,42 @@ function Room(data) {
 	}
 
 	self.update = function(buttonsPressed, elapsedTime) {
-		var removals = [];
+		if (buttonsPressed[27]) {
+			if (!wasPausedLastTick)
+				isPaused = !isPaused;
 
-		var updateData = {
-			buttonsPressed: buttonsPressed,
-			elapsedTime: elapsedTime,
-			entities: entities,
-			surfaces: surfaces,
-			player: player
-		};
+			wasPausedLastTick = true;
+		}
+		else {
+			wasPausedLastTick = false;
+		}
 
-		entities.forEach(function (entity, index) {
-			entity.update(updateData);
-		});
+		if (!isPaused) {
+			var removals = [];
 
-		entities.forEach(function (entity, index) {
-			if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0)
-				removals.push(index);
-		});
+			var updateData = {
+				buttonsPressed: buttonsPressed,
+				elapsedTime: elapsedTime,
+				entities: entities,
+				surfaces: surfaces,
+				player: player
+			};
 
-		for (var i = 0; i < removals.length; i++)
-			entities.removeAt(removals[i] - i); // (- i) on purpose
+			entities.forEach(function (entity, index) {
+				entity.update(updateData);
+			});
 
-		if (player.data && player.data.nextRoom)
-			self.moveNext = player.data.nextRoom;
+			entities.forEach(function (entity, index) {
+				if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0)
+					removals.push(index);
+			});
+
+			for (var i = 0; i < removals.length; i++)
+				entities.removeAt(removals[i] - i); // (- i) on purpose
+
+			if (player.data && player.data.nextRoom)
+				self.moveNext = player.data.nextRoom;
+		}
 	};
 
 	self.draw = function (ctx, viewPortSize) {
@@ -339,24 +365,34 @@ function Room(data) {
 			y: player.y + player.bounds.radius
 		};
 
-		if (playerPosition.x < viewPortSize.x / 2)
-			cameraPosition.x = 0;
-		else if (playerPosition.x > size.x - viewPortSize.x / 2)
-			cameraPosition.x = size.x - viewPortSize.x;
-		else
-			cameraPosition.x = playerPosition.x - viewPortSize.x / 2;
+		if (size.x <= viewPortSize.x) {
+			cameraPosition.x = (size.x - viewPortSize.x) / 2;
+		}
+		else {
+			if (playerPosition.x < viewPortSize.x / 2)
+				cameraPosition.x = 0;
+			else if (playerPosition.x > size.x - viewPortSize.x / 2)
+				cameraPosition.x = size.x - viewPortSize.x;
+			else
+				cameraPosition.x = playerPosition.x - viewPortSize.x / 2;
+		}
 
-		if (playerPosition.y < viewPortSize.y / 2)
-			cameraPosition.y = 0;
-		else if (playerPosition.y > size.y - viewPortSize.y / 2)
-			cameraPosition.y = size.y - viewPortSize.y;
-		else
-			cameraPosition.y = playerPosition.y - viewPortSize.y / 2;
+		if (size.y <= viewPortSize.y) {
+			cameraPosition.y = (size.y - viewPortSize.y) / 2;
+		}
+		else {
+			if (playerPosition.y < viewPortSize.y / 2)
+				cameraPosition.y = 0;
+			else if (playerPosition.y > size.y - viewPortSize.y / 2)
+				cameraPosition.y = size.y - viewPortSize.y;
+			else
+				cameraPosition.y = playerPosition.y - viewPortSize.y / 2;
+		}
 
 		drawUtility.rectangle(ctx, {
 			x: 0,
 			y: 0
-		}, size, '#888888');
+		}, viewPortSize, '#888888');
 
 		drawUtility.rectangle(ctx, {
 			x: 100 - cameraPosition.x,
@@ -405,6 +441,30 @@ function Room(data) {
 
 		entities.forEach(function (entity) {
 			entity.draw(ctx, cameraPosition);
+			if (isPaused) {
+				if (entity.type === types.item) {
+					ctx.font = "30px Arial";
+					ctx.fillStyle = "#FFFFFF";
+					ctx.textAlign = "center";
+					ctx.fillText(entity.data.item.name, entity.x + entity.bounds.radius - cameraPosition.x, entity.y - 70 - cameraPosition.y);
+
+					ctx.font = "20px Arial";
+					ctx.fillStyle = "#FFFFFF";
+					ctx.textAlign = "center";
+					ctx.fillText(entity.data.item.subtext, entity.x + entity.bounds.radius - cameraPosition.x, entity.y - 30 - cameraPosition.y);
+				}
+				else if (entity.type === types.enemy) {
+					ctx.font = "30px Arial";
+					ctx.fillStyle = "#BB8888";
+					ctx.textAlign = "center";
+					ctx.fillText(entity.data.enemyData.name, entity.x + entity.bounds.radius - cameraPosition.x, entity.y - 70 - cameraPosition.y);
+
+					ctx.font = "20px Arial";
+					ctx.fillStyle = "#BB8888";
+					ctx.textAlign = "center";
+					ctx.fillText(entity.data.enemyData.description, entity.x + entity.bounds.radius - cameraPosition.x, entity.y - 30 - cameraPosition.y);
+				}
+			}
 		});
 
 		surfaces.forEach(function (surface) {
@@ -419,12 +479,22 @@ function Room(data) {
 			ctx.font = "30px Arial";
 			ctx.fillStyle = "#FFFFFF";
 			ctx.textAlign = "center";
-			ctx.fillText(mostRecentItem.name, viewPortSize.x / 2, 150); 
+			ctx.fillText(mostRecentItem.name, viewPortSize.x / 2, 150);
 
 			ctx.font = "20px Arial";
 			ctx.fillStyle = "#FFFFFF";
 			ctx.textAlign = "center";
-			ctx.fillText(mostRecentItem.subtext, viewPortSize.x / 2, 200); 
+			ctx.fillText(mostRecentItem.subtext, viewPortSize.x / 2, 200);
+		}
+
+		if (isPaused) {
+			drawUtility.rectangle(ctx, {
+				x: 0,
+				y: 0
+			}, {
+				x: viewPortSize.x,
+				y: viewPortSize.y
+			}, 'rgba(0, 0, 0, 0.5)');
 		}
 	}
 }

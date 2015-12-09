@@ -14,7 +14,7 @@ module.exports = {
 			health: 4,
 			contactDamage: 0,
 			rateOfFire: 0.5,
-			bulletSpeed: 10,
+			bulletSpeed: 12,
 			bulletDamage: 1,
 			speed: 8
 		});

@@ -59,7 +59,10 @@ enemyBulletRules[types.enemyBullet] = ruleFactory.create({
 
 enemyBulletRules[types.player] = ruleFactory.create({
 	canCollide: false,
-	damages: true
+	damages: true,
+	callback: function (enemyBullet, player) {
+		enemyBullet.data.hp.amount = 0;
+	}
 });
 
 enemyBulletRules[types.playerBullet] = ruleFactory.create({
