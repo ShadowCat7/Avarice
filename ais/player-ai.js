@@ -56,7 +56,7 @@ module.exports = {
 		}
 
 		// A
-		if (updateData.buttonsPressed[65] || updateData.buttonsPressed[69]) {
+		if (updateData.buttonsPressed[65]) {
 			acceleration = acceleration.add(vector.create({
 				x: -1,
 				y: 0
@@ -64,7 +64,7 @@ module.exports = {
 		}
 
 		// D
-		if (updateData.buttonsPressed[68]) {
+		if (updateData.buttonsPressed[68] || updateData.buttonsPressed[69]) {
 			acceleration = acceleration.add(vector.create({
 				x: 1,
 				y: 0
