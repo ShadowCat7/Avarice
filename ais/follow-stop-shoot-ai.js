@@ -21,7 +21,7 @@ module.exports = {
 			y: updateData.player.y + updateData.player.bounds.radius - entity.y - entity.bounds.radius
 		});
 
-		if (acceleration.magnitude > 200) {
+		if (acceleration.magnitude > 150) {
 			acceleration = vector.create({
 				magnitude: 1,
 				direction: acceleration.direction

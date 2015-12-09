@@ -4,8 +4,16 @@ var enemies = require('../enemies/enemies');
 var rooms = {};
 rooms[roomTypes.normal] = [
 	createRoom(800, 600, null, [
-		//createEnemy('blarg', 700, 700),
 		createEnemy('hunter', 380, 280)
+	]),
+	createRoom(800, 600, null, [
+		createEnemy('blarg', 380, 280)
+	]),
+	createRoom(1200, 1000, null, [
+		createEnemy('blarg', 200, 200),
+		createEnemy('blarg', 1000, 200),
+		createEnemy('blarg', 1000, 800),
+		createEnemy('blarg', 200, 800)
 	])
 ];
 
@@ -14,7 +22,9 @@ rooms[roomTypes.item] = [
 ];
 
 rooms[roomTypes.boss] = [
-	createRoom(1000, 1000)
+	createRoom(800, 600, null, [
+		createEnemy('boss', 350, 250)
+	])
 ];
 
 var startingRoom = createRoom(800, 600);

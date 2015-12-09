@@ -54,19 +54,23 @@ function draw() {
 	}, '#998899');
 
 	for (var i = 0; i < roomMap.length; i++) {
-		for (var j = 0; j < roomMap[i].length; j++) {
-			var drawingRoom = roomMap[i][j];
-			var x = canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
-			var y = 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
+		if (roomMap[i]) {
+			for (var j = 0; j < roomMap[i].length; j++) {
+				if (roomMap[i][j]) {
+					var drawingRoom = roomMap[i][j];
+					var x = canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
+					var y = 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
 
-			if (x > canvas.width - 160 && y < 100) {
-				drawUtility.rectangle(ctx, {
-					x: x,
-					y: y
-				}, {
-					x: 18,
-					y: 12
-				}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+					if (x > canvas.width - 160 && y < 88) {
+						drawUtility.rectangle(ctx, {
+							x: x,
+							y: y
+						}, {
+							x: 18,
+							y: 12
+						}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+					}
+				}
 			}
 		}
 	}
@@ -87,7 +91,7 @@ function generateRoom(roomType, mapPosition) {
 				x: enemyData.position.x,
 				y: enemyData.position.y,
 				bounds: boundsFactory.createCircle({
-					radius: 20
+					radius: enemyData.name === 'boss' ? 50 : 20
 				}),
 				stats: enemy.stats,
 				causesCollisions: true,
@@ -167,8 +171,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	player = entityFactory.create({
 		type: types.player,
-		x: 150,
-		y: 150,
+		x: 380,
+		y: 280,
 		bounds: boundsFactory.createCircle({
 			radius: 20
 		}),
@@ -188,38 +192,84 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	roomMap = [];
-	for (var i = 0; i < 6; i++) {
-		var roomType = roomTypes.normal;
-		if (i === 0)
-			roomType = roomTypes.start;
-		if (i === 2)
-			roomType = roomTypes.item;
+	var creatingRoomMap = [generateRoom(roomTypes.start, { x: 0, y: 0 })];
+	var roomCount = 4 + Math.floor(Math.random() * 3);
+	var location = { x: 0, y: 0 };
+	var directions = ['n', 's', 'e', 'w'];
+	var direction = null;
+	var itemRoomIndex = Math.floor(Math.random() * roomCount - 1);
+	var smallestX = 0;
+	var smallestY = 0;
 
-		roomMap.push([generateRoom(roomType, { x: i, y: 0 })]);
+	for (var i = 0; i < roomCount; i++) {
+		var oldDirection = direction;
+		direction = directions[Math.floor(Math.random() * 4)];
+
+		if (direction === 'n' && oldDirection === 's'
+			|| direction === 's' && oldDirection === 'n'
+			|| direction === 'e' && oldDirection === 'w'
+			|| direction === 'w' && oldDirection === 'e') {
+			direction = oldDirection;
+		}
+
+		if (direction === 'n') {
+			location.y--;
+			smallestY--;
+		}
+		else if (direction === 's') {
+			location.y++;
+		}
+		else if (direction === 'e') {
+			location.x--;
+			smallestX--;
+		}
+		else if (direction === 'w') {
+			location.x++;
+		}
+
+		var roomType = roomTypes.normal;
+		if (i === itemRoomIndex)
+			roomType = roomTypes.item;
+		if (i === roomCount - 1)
+			roomType = roomTypes.boss;
+
+		creatingRoomMap.push(generateRoom(roomType, { x: location.x, y: location.y }));
+	}
+
+	roomMap = [];
+	for (i = 0; i < creatingRoomMap.length; i++) {
+		var room = creatingRoomMap[i];
+		if (!roomMap[room.mapPosition.x - smallestX])
+			roomMap[room.mapPosition.x - smallestX] = [];
+
+		roomMap[room.mapPosition.x - smallestX][room.mapPosition.y - smallestY] = room;
 	}
 	
 	for (i = 0; i < roomMap.length; i++) {
-		for (j = 0; j < roomMap[i].length; j++) {
-			var doorLocations = {};
+		if (roomMap[i]) {
+			for (j = 0; j < roomMap[i].length; j++) {
+				if (roomMap[i][j]) {
+					var doorLocations = {};
 			
-			if (i > 0 && roomMap[i - 1][j])
-				doorLocations.w = roomMap[i - 1][j];
+					if (i > 0 && roomMap[i - 1] && roomMap[i - 1][j])
+						doorLocations.w = roomMap[i - 1][j];
 
-			if (i < roomMap.length - 1 && roomMap[i + 1][j])
-				doorLocations.e = roomMap[i + 1][j];
+					if (i < roomMap.length - 1 && roomMap[i + 1] && roomMap[i + 1][j])
+						doorLocations.e = roomMap[i + 1][j];
 
-			if (j > 0 && roomMap[i][j - 1])
-				doorLocations.n = roomMap[i][j - 1];
+					if (j > 0 && roomMap[i][j - 1])
+						doorLocations.n = roomMap[i][j - 1];
 
-			if (j < roomMap[i].length - 1 && roomMap[i][j + 1])
-				doorLocations.s = roomMap[i][j + 1];
+					if (j < roomMap[i].length - 1 && roomMap[i][j + 1])
+						doorLocations.s = roomMap[i][j + 1];
 
-			roomMap[i][j].addWalls(doorLocations);
+					roomMap[i][j].addWalls(doorLocations);
+				}
+			}
 		}
 	}
 
-	currentRoom = roomMap[0][0];
+	currentRoom = roomMap[0 - smallestX][0 - smallestY];
 
 	engine = engine.create(canvas, update, draw);
 	engine.start();

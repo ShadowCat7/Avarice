@@ -3,9 +3,9 @@ var items = [
 		rateOfFire: -0.1,
 		speed: 2
 	}),
-	item('Sniper Rifle', 'Rate of fire down, bullet speed up', {
-		rateOfFire: 0.2,
-		bulletSpeed: 10
+	item('Submachine Gun', 'Rate of fire up, damage down', {
+		bulletDamage: -0.5,
+		rateOfFire: -0.3
 	})
 ];
 

@@ -27,6 +27,8 @@ function Room(data) {
 	var isPaused = false;
 	var wasPausedLastTick = false;
 
+	var isYouWin = false;
+
 	self.moveNext = false;
 
 	entities.insert(player, 0);
@@ -347,8 +349,12 @@ function Room(data) {
 			});
 
 			entities.forEach(function (entity, index) {
-				if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0)
+				if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0) {
 					removals.push(index);
+
+					if (entity.data && entity.data.enemyData && entity.data.enemyData.name === 'Boss')
+						isYouWin = true;
+				}
 			});
 
 			for (var i = 0; i < removals.length; i++)
@@ -496,6 +502,14 @@ function Room(data) {
 				y: viewPortSize.y
 			}, 'rgba(0, 0, 0, 0.5)');
 		}
+
+		if (isYouWin) {
+			ctx.font = "50px Arial";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText('YOU DID IT', viewPortSize.x / 2, 250);
+		}
+
 	}
 }
 

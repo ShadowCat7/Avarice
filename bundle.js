@@ -18,7 +18,7 @@ module.exports = {
 	}
 };
 
-},{"../utility/vector":25}],2:[function(require,module,exports){
+},{"../utility/vector":26}],2:[function(require,module,exports){
 var vector = require('../utility/vector');
 var controller = require('../controller');
 var drawUtility = require('../utility/draw-utility');
@@ -42,7 +42,7 @@ module.exports = {
 			y: updateData.player.y + updateData.player.bounds.radius - entity.y - entity.bounds.radius
 		});
 
-		if (acceleration.magnitude > 200) {
+		if (acceleration.magnitude > 150) {
 			acceleration = vector.create({
 				magnitude: 1,
 				direction: acceleration.direction
@@ -108,7 +108,7 @@ module.exports = {
 	}
 };
 
-},{"../controller":7,"../controller-modules/hp-module":5,"../controller-modules/movement-module":6,"../stats":15,"../types":16,"../utility/bounds":17,"../utility/draw-utility":18,"../utility/entity":20,"../utility/timer":24,"../utility/vector":25}],3:[function(require,module,exports){
+},{"../controller":8,"../controller-modules/hp-module":6,"../controller-modules/movement-module":7,"../stats":16,"../types":17,"../utility/bounds":18,"../utility/draw-utility":19,"../utility/entity":21,"../utility/timer":25,"../utility/vector":26}],3:[function(require,module,exports){
 var vector = require('../utility/vector');
 var boundsFactory = require('../utility/bounds');
 var entityFactory = require('../utility/entity');
@@ -278,7 +278,89 @@ module.exports = {
 	}
 };
 
-},{"../controller-modules/hp-module":5,"../controller-modules/movement-module":6,"../stats":15,"../types":16,"../utility/bounds":17,"../utility/draw-utility":18,"../utility/entity":20,"../utility/timer":24,"../utility/vector":25}],4:[function(require,module,exports){
+},{"../controller-modules/hp-module":6,"../controller-modules/movement-module":7,"../stats":16,"../types":17,"../utility/bounds":18,"../utility/draw-utility":19,"../utility/entity":21,"../utility/timer":25,"../utility/vector":26}],4:[function(require,module,exports){
+var vector = require('../utility/vector');
+var controller = require('../controller');
+var drawUtility = require('../utility/draw-utility');
+var entityFactory = require('../utility/entity');
+var boundsFactory = require('../utility/bounds');
+var timerFactory = require('../utility/timer');
+var hpModuleFactory = require('../controller-modules/hp-module');
+var movementModuleFactory = require('../controller-modules/movement-module');
+var types = require('../types');
+var statsFactory = require('../stats');
+
+module.exports = {
+	init: function (entity) {
+		entity.data.ai = {
+			rateOfFireTimer: timerFactory.create(entity.stats.rateOfFire, true)
+		};
+	},
+	update: function (updateData, entity) {
+		if (entity.data.ai.rateOfFireTimer.isSet()) {
+			var directionToPlayer = vector.create({
+				x: updateData.player.x + updateData.player.bounds.radius - entity.x - entity.bounds.radius,
+				y: updateData.player.y + updateData.player.bounds.radius - entity.y - entity.bounds.radius
+			});
+
+			var bulletPosition = vector.create({
+				magnitude: entity.bounds.radius,
+				direction: directionToPlayer.direction
+			});
+
+			var bullet = entityFactory.create({
+				type: types.enemyBullet,
+				x: entity.x + entity.bounds.radius + bulletPosition.x - 10,
+				y: entity.y + entity.bounds.radius + bulletPosition.y - 10,
+				maxSpeed: 10,
+				bounds: boundsFactory.createCircle({
+					radius: 10
+				}),
+				controllerData: {
+					hpModule: hpModuleFactory.create({
+						amount: 1,
+						timer: timerFactory.create(0.1, true)
+					}),
+					movementModule: movementModuleFactory.create({
+						velocity: vector.create({
+							magnitude: entity.stats.bulletSpeed,
+							direction: directionToPlayer.direction
+						})
+					})
+				},
+				stats: statsFactory.create({
+					health: 1,
+					contactDamage: entity.stats.bulletDamage,
+					speed: entity.stats.bulletSpeed
+				}),
+				drawFunc: function (entity, roomPosition, ctx) {
+					drawUtility.circle(ctx, entity.x - roomPosition.x, entity.y - roomPosition.y, entity.bounds.radius, '#FF0000');
+				}
+			});
+
+			updateData.entities.append(bullet);
+
+			entity.data.ai.rateOfFireTimer.reset();
+		}
+
+		acceleration = vector.create({
+			x: 0,
+			y: 0
+		});
+
+		if (!entity.data.ai.rateOfFireTimer.isSet())
+			entity.data.ai.rateOfFireTimer.update(updateData.elapsedTime);
+
+		return {
+			elapsedTime: updateData.elapsedTime,
+			entities: updateData.entities,
+			surfaces: updateData.surfaces,
+			acceleration: acceleration
+		};
+	}
+};
+
+},{"../controller":8,"../controller-modules/hp-module":6,"../controller-modules/movement-module":7,"../stats":16,"../types":17,"../utility/bounds":18,"../utility/draw-utility":19,"../utility/entity":21,"../utility/timer":25,"../utility/vector":26}],5:[function(require,module,exports){
 var engine = require('./utility/engine');
 var entityFactory = require('./utility/entity');
 var surfaceFactory = require('./utility/surface');
@@ -335,19 +417,23 @@ function draw() {
 	}, '#998899');
 
 	for (var i = 0; i < roomMap.length; i++) {
-		for (var j = 0; j < roomMap[i].length; j++) {
-			var drawingRoom = roomMap[i][j];
-			var x = canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
-			var y = 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
+		if (roomMap[i]) {
+			for (var j = 0; j < roomMap[i].length; j++) {
+				if (roomMap[i][j]) {
+					var drawingRoom = roomMap[i][j];
+					var x = canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
+					var y = 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
 
-			if (x > canvas.width - 160 && y < 100) {
-				drawUtility.rectangle(ctx, {
-					x: x,
-					y: y
-				}, {
-					x: 18,
-					y: 12
-				}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+					if (x > canvas.width - 160 && y < 88) {
+						drawUtility.rectangle(ctx, {
+							x: x,
+							y: y
+						}, {
+							x: 18,
+							y: 12
+						}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+					}
+				}
 			}
 		}
 	}
@@ -368,7 +454,7 @@ function generateRoom(roomType, mapPosition) {
 				x: enemyData.position.x,
 				y: enemyData.position.y,
 				bounds: boundsFactory.createCircle({
-					radius: 20
+					radius: enemyData.name === 'boss' ? 50 : 20
 				}),
 				stats: enemy.stats,
 				causesCollisions: true,
@@ -448,8 +534,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	player = entityFactory.create({
 		type: types.player,
-		x: 150,
-		y: 150,
+		x: 380,
+		y: 280,
 		bounds: boundsFactory.createCircle({
 			radius: 20
 		}),
@@ -469,44 +555,90 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	roomMap = [];
-	for (var i = 0; i < 6; i++) {
-		var roomType = roomTypes.normal;
-		if (i === 0)
-			roomType = roomTypes.start;
-		if (i === 2)
-			roomType = roomTypes.item;
+	var creatingRoomMap = [generateRoom(roomTypes.start, { x: 0, y: 0 })];
+	var roomCount = 4 + Math.floor(Math.random() * 3);
+	var location = { x: 0, y: 0 };
+	var directions = ['n', 's', 'e', 'w'];
+	var direction = null;
+	var itemRoomIndex = Math.floor(Math.random() * roomCount - 1);
+	var smallestX = 0;
+	var smallestY = 0;
 
-		roomMap.push([generateRoom(roomType, { x: i, y: 0 })]);
+	for (var i = 0; i < roomCount; i++) {
+		var oldDirection = direction;
+		direction = directions[Math.floor(Math.random() * 4)];
+
+		if (direction === 'n' && oldDirection === 's'
+			|| direction === 's' && oldDirection === 'n'
+			|| direction === 'e' && oldDirection === 'w'
+			|| direction === 'w' && oldDirection === 'e') {
+			direction = oldDirection;
+		}
+
+		if (direction === 'n') {
+			location.y--;
+			smallestY--;
+		}
+		else if (direction === 's') {
+			location.y++;
+		}
+		else if (direction === 'e') {
+			location.x--;
+			smallestX--;
+		}
+		else if (direction === 'w') {
+			location.x++;
+		}
+
+		var roomType = roomTypes.normal;
+		if (i === itemRoomIndex)
+			roomType = roomTypes.item;
+		if (i === roomCount - 1)
+			roomType = roomTypes.boss;
+
+		creatingRoomMap.push(generateRoom(roomType, { x: location.x, y: location.y }));
+	}
+
+	roomMap = [];
+	for (i = 0; i < creatingRoomMap.length; i++) {
+		var room = creatingRoomMap[i];
+		if (!roomMap[room.mapPosition.x - smallestX])
+			roomMap[room.mapPosition.x - smallestX] = [];
+
+		roomMap[room.mapPosition.x - smallestX][room.mapPosition.y - smallestY] = room;
 	}
 	
 	for (i = 0; i < roomMap.length; i++) {
-		for (j = 0; j < roomMap[i].length; j++) {
-			var doorLocations = {};
+		if (roomMap[i]) {
+			for (j = 0; j < roomMap[i].length; j++) {
+				if (roomMap[i][j]) {
+					var doorLocations = {};
 			
-			if (i > 0 && roomMap[i - 1][j])
-				doorLocations.w = roomMap[i - 1][j];
+					if (i > 0 && roomMap[i - 1] && roomMap[i - 1][j])
+						doorLocations.w = roomMap[i - 1][j];
 
-			if (i < roomMap.length - 1 && roomMap[i + 1][j])
-				doorLocations.e = roomMap[i + 1][j];
+					if (i < roomMap.length - 1 && roomMap[i + 1] && roomMap[i + 1][j])
+						doorLocations.e = roomMap[i + 1][j];
 
-			if (j > 0 && roomMap[i][j - 1])
-				doorLocations.n = roomMap[i][j - 1];
+					if (j > 0 && roomMap[i][j - 1])
+						doorLocations.n = roomMap[i][j - 1];
 
-			if (j < roomMap[i].length - 1 && roomMap[i][j + 1])
-				doorLocations.s = roomMap[i][j + 1];
+					if (j < roomMap[i].length - 1 && roomMap[i][j + 1])
+						doorLocations.s = roomMap[i][j + 1];
 
-			roomMap[i][j].addWalls(doorLocations);
+					roomMap[i][j].addWalls(doorLocations);
+				}
+			}
 		}
 	}
 
-	currentRoom = roomMap[0][0];
+	currentRoom = roomMap[0 - smallestX][0 - smallestY];
 
 	engine = engine.create(canvas, update, draw);
 	engine.start();
 });
 
-},{"./ais/follow-player-ai":1,"./ais/player-ai":3,"./controller-modules/hp-module":5,"./controller-modules/movement-module":6,"./enemies/enemies":8,"./items/items":9,"./room":10,"./rooms/room-types":11,"./rooms/rooms":12,"./types":16,"./utility/bounds":17,"./utility/draw-utility":18,"./utility/engine":19,"./utility/entity":20,"./utility/linked-list":21,"./utility/surface":23,"./utility/timer":24,"./utility/vector":25}],5:[function(require,module,exports){
+},{"./ais/follow-player-ai":1,"./ais/player-ai":3,"./controller-modules/hp-module":6,"./controller-modules/movement-module":7,"./enemies/enemies":9,"./items/items":10,"./room":11,"./rooms/room-types":12,"./rooms/rooms":13,"./types":17,"./utility/bounds":18,"./utility/draw-utility":19,"./utility/engine":20,"./utility/entity":21,"./utility/linked-list":22,"./utility/surface":24,"./utility/timer":25,"./utility/vector":26}],6:[function(require,module,exports){
 function create(data) {
 	return {
 		init: function (entity) {
@@ -531,7 +663,7 @@ module.exports = {
 	create: create
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var vector = require('../utility/vector');
 var rules = require('../rules');
 
@@ -635,7 +767,7 @@ module.exports = {
 	create: create
 };
 
-},{"../rules":13,"../utility/vector":25}],7:[function(require,module,exports){
+},{"../rules":14,"../utility/vector":26}],8:[function(require,module,exports){
 var vector = require('./utility/vector');
 var drawUtility = require('./utility/draw-utility');
 var rules = require('./rules');
@@ -696,9 +828,10 @@ module.exports = {
 	}
 };
 
-},{"./rules":13,"./utility/draw-utility":18,"./utility/vector":25}],8:[function(require,module,exports){
+},{"./rules":14,"./utility/draw-utility":19,"./utility/vector":26}],9:[function(require,module,exports){
 var followPlayerAi = require('../ais/follow-player-ai');
 var followStopShootAi = require('../ais/follow-stop-shoot-ai');
+var shootPlayerAi = require('../ais/shoot-player-ai');
 
 var enemies = {
 	blarg: new Enemy('Blarg', 'Chases you', followPlayerAi, {
@@ -706,11 +839,19 @@ var enemies = {
 		health: 3,
 		speed: 3
 	}),
-	hunter: new Enemy('Blarg', 'Chases and shoots you', followStopShootAi, {
+	hunter: new Enemy('Hunter', 'Chases and shoots you', followStopShootAi, {
 		contactDamage: 1,
 		health: 3,
 		speed: 2,
 		rateOfFire: 1,
+		bulletSpeed: 4,
+		bulletDamage: 1
+	}),
+	boss: new Enemy('Boss', 'Shoots at you', shootPlayerAi, {
+		contactDamage: 1,
+		health: 10,
+		speed: 1,
+		rateOfFire: 0.4,
 		bulletSpeed: 4,
 		bulletDamage: 1
 	})
@@ -734,15 +875,15 @@ module.exports = {
 	}
 };
 
-},{"../ais/follow-player-ai":1,"../ais/follow-stop-shoot-ai":2}],9:[function(require,module,exports){
+},{"../ais/follow-player-ai":1,"../ais/follow-stop-shoot-ai":2,"../ais/shoot-player-ai":4}],10:[function(require,module,exports){
 var items = [
 	item('Adderol', 'Rate of fire up, speed up', {
 		rateOfFire: -0.1,
 		speed: 2
 	}),
-	item('Sniper Rifle', 'Rate of fire down, bullet speed up', {
-		rateOfFire: 0.2,
-		bulletSpeed: 10
+	item('Submachine Gun', 'Rate of fire up, damage down', {
+		bulletDamage: -0.5,
+		rateOfFire: -0.3
 	})
 ];
 
@@ -765,7 +906,7 @@ module.exports = {
 	}
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var surfaceFactory = require('./utility/surface');
 var entityFactory = require('./utility/entity');
 var boundsFactory = require('./utility/bounds');
@@ -794,6 +935,8 @@ function Room(data) {
 
 	var isPaused = false;
 	var wasPausedLastTick = false;
+
+	var isYouWin = false;
 
 	self.moveNext = false;
 
@@ -1115,8 +1258,12 @@ function Room(data) {
 			});
 
 			entities.forEach(function (entity, index) {
-				if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0)
+				if (entity.data.remove || entity.data.hp && entity.data.hp.amount <= 0) {
 					removals.push(index);
+
+					if (entity.data && entity.data.enemyData && entity.data.enemyData.name === 'Boss')
+						isYouWin = true;
+				}
 			});
 
 			for (var i = 0; i < removals.length; i++)
@@ -1264,6 +1411,14 @@ function Room(data) {
 				y: viewPortSize.y
 			}, 'rgba(0, 0, 0, 0.5)');
 		}
+
+		if (isYouWin) {
+			ctx.font = "50px Arial";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.textAlign = "center";
+			ctx.fillText('YOU DID IT', viewPortSize.x / 2, 250);
+		}
+
 	}
 }
 
@@ -1273,7 +1428,7 @@ module.exports = {
 	}
 };
 
-},{"./types":16,"./utility/bounds":17,"./utility/draw-utility":18,"./utility/entity":20,"./utility/surface":23,"./utility/vector":25}],11:[function(require,module,exports){
+},{"./types":17,"./utility/bounds":18,"./utility/draw-utility":19,"./utility/entity":21,"./utility/surface":24,"./utility/vector":26}],12:[function(require,module,exports){
 module.exports = {
 	normal: 'normal',
 	item: 'item',
@@ -1281,15 +1436,23 @@ module.exports = {
 	start: 'start'
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var roomTypes = require('./room-types');
 var enemies = require('../enemies/enemies');
 
 var rooms = {};
 rooms[roomTypes.normal] = [
 	createRoom(800, 600, null, [
-		//createEnemy('blarg', 700, 700),
 		createEnemy('hunter', 380, 280)
+	]),
+	createRoom(800, 600, null, [
+		createEnemy('blarg', 380, 280)
+	]),
+	createRoom(1200, 1000, null, [
+		createEnemy('blarg', 200, 200),
+		createEnemy('blarg', 1000, 200),
+		createEnemy('blarg', 1000, 800),
+		createEnemy('blarg', 200, 800)
 	])
 ];
 
@@ -1298,7 +1461,9 @@ rooms[roomTypes.item] = [
 ];
 
 rooms[roomTypes.boss] = [
-	createRoom(1000, 1000)
+	createRoom(800, 600, null, [
+		createEnemy('boss', 350, 250)
+	])
 ];
 
 var startingRoom = createRoom(800, 600);
@@ -1344,7 +1509,7 @@ module.exports = {
 	}
 };
 
-},{"../enemies/enemies":8,"./room-types":11}],13:[function(require,module,exports){
+},{"../enemies/enemies":9,"./room-types":12}],14:[function(require,module,exports){
 var collisionRules = require('./rules/collisions');
 
 module.exports = {
@@ -1362,7 +1527,7 @@ module.exports = {
 	}
 };
 
-},{"./rules/collisions":14}],14:[function(require,module,exports){
+},{"./rules/collisions":15}],15:[function(require,module,exports){
 var types = require('../types');
 var ruleFactory = require('../utility/rule');
 
@@ -1530,7 +1695,7 @@ module.exports = {
 	rules: rules
 };
 
-},{"../types":16,"../utility/rule":22}],15:[function(require,module,exports){
+},{"../types":17,"../utility/rule":23}],16:[function(require,module,exports){
 function createStats (data) {
 	return {
 		health: data.health,
@@ -1558,7 +1723,7 @@ module.exports = {
 	add: addStats
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports = {
 	neutral: 'neutral',
 	enemy: 'enemy',
@@ -1570,7 +1735,7 @@ module.exports = {
 	item: 'item'
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var vector = require('./vector');
 
 function BoundingCircle(data) {
@@ -1648,7 +1813,7 @@ module.exports = {
 	}
 };
 
-},{"./vector":25}],18:[function(require,module,exports){
+},{"./vector":26}],19:[function(require,module,exports){
 module.exports = {
 	circle: function (ctx, x, y, radius, color) {
 		ctx.beginPath();
@@ -1667,7 +1832,7 @@ module.exports = {
 	}
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var epsilon = 0.00000001;
 var targetFps = 60;
 var targetSpf = 1 / targetFps;
@@ -1749,7 +1914,7 @@ module.exports = {
 	}
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var vector = require('./vector');
 var controllerFactory = require('../controller');
 
@@ -1789,7 +1954,7 @@ module.exports = {
 	}
 };
 
-},{"../controller":7,"./vector":25}],21:[function(require,module,exports){
+},{"../controller":8,"./vector":26}],22:[function(require,module,exports){
 function Node(data) {
 	var self = this;
 	
@@ -1975,7 +2140,7 @@ module.exports = {
 	}
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 function Rule(data) {
 	var self = this;
 
@@ -1988,7 +2153,7 @@ module.exports = {
 	}
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var vector = require('./vector');
 
 function Surface(data) {
@@ -2150,7 +2315,7 @@ module.exports = {
 	}
 };
 
-},{"./vector":25}],24:[function(require,module,exports){
+},{"./vector":26}],25:[function(require,module,exports){
 function Timer(duration, isStartingSet) {
 	var self = this;
 	var timeSince = isStartingSet ? duration : 0;
@@ -2183,7 +2348,7 @@ module.exports = {
 	}
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 function Vector(data) {
 	var self = this;
 
@@ -2241,4 +2406,4 @@ module.exports = {
 	}
 };
 
-},{}]},{},[4]);
+},{}]},{},[5]);
