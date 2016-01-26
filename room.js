@@ -75,6 +75,16 @@ function Room(data) {
 			player.data.nextSide = null;
 		}
 
+		var removals = [];
+
+		entities.forEach(function (entity, index) {
+			if (entity.type === types.playerBullet || entity.type === types.enemyBullet)
+				removals.push(index);
+		});
+
+		for (var i = 0; i < removals.length; i++)
+			entities.removeAt(removals[i] - i); // (- i) on purpose
+
 		if (roomEnteredCallback)
 			roomEnteredCallback();
 	};
