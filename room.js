@@ -4,6 +4,8 @@ var boundsFactory = require('./utility/bounds');
 var types = require('./types');
 var drawUtility = require('./utility/draw-utility');
 var vector = require('./utility/vector');
+var types = require('./types');
+var roomTypes = require('./rooms/room-types');
 
 var wallThickness = 50;
 var halfDoorWidth = 50;
@@ -38,6 +40,7 @@ function Room(data) {
 	entities.insert(player, 0);
 
 	var roomEnteredCallback = data.roomEnteredCallback;
+	var isEnemyExist = self.type === roomTypes.normal ? true : false;
 
 	function nextRoomTrigger(door) {
 		player.data.nextSide = door.data.doorLocation;
@@ -112,6 +115,19 @@ function Room(data) {
 				y2: wallThickness
 			}));
 
+			if (data.type === roomTypes.normal) {
+				surfaces.append(surfaceFactory.create({
+					type: types.wall,
+					x: size.x / 2 - halfDoorWidth,
+					y: wallThickness / 2,
+					x2: size.x / 2 + halfDoorWidth,
+					y2: wallThickness / 2,
+					data: {
+						closedDoor: true
+					}
+				}));
+			}
+
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
 				x: size.x / 2 - halfDoorWidth,
@@ -176,6 +192,19 @@ function Room(data) {
 				x2: size.x - wallThickness,
 				y2: size.y - wallThickness
 			}));
+
+			if (data.type === roomTypes.normal) {
+				surfaces.append(surfaceFactory.create({
+					type: types.wall,
+					x: size.x - wallThickness / 2,
+					y: size.y / 2 - halfDoorWidth,
+					x2: size.x - wallThickness / 2,
+					y2: size.y / 2 + halfDoorWidth,
+					data: {
+						closedDoor: true
+					}
+				}));
+			}
 
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
@@ -246,6 +275,19 @@ function Room(data) {
 				y2: size.y - wallThickness
 			}));
 
+			if (data.type === roomTypes.normal) {
+				surfaces.append(surfaceFactory.create({
+					type: types.wall,
+					x: size.x / 2 + halfDoorWidth,
+					y: size.y - wallThickness / 2,
+					x2: size.x / 2 - halfDoorWidth,
+					y2: size.y - wallThickness / 2,
+					data: {
+						closedDoor: true
+					}
+				}));
+			}
+
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
 				x: size.x / 2 + halfDoorWidth,
@@ -302,6 +344,19 @@ function Room(data) {
 				y2: wallThickness
 			}));
 
+			if (data.type === roomTypes.normal) {
+				surfaces.append(surfaceFactory.create({
+					type: types.wall,
+					x: wallThickness / 2,
+					y: size.y / 2 + halfDoorWidth,
+					x2: wallThickness / 2,
+					y2: size.y / 2 - halfDoorWidth,
+					data: {
+						closedDoor: true
+					}
+				}));
+			}
+
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
 				x: 0,
@@ -348,8 +403,12 @@ function Room(data) {
 				player: player
 			};
 
+			var isNoEnemyExists = true;
+
 			entities.forEach(function (entity, index) {
 				entity.update(updateData);
+				if (entity.type === types.enemy)
+					isNoEnemyExists = false;
 			});
 
 			entities.forEach(function (entity, index) {
@@ -363,6 +422,18 @@ function Room(data) {
 
 			for (var i = 0; i < removals.length; i++)
 				entities.removeAt(removals[i] - i); // (- i) on purpose
+
+			if (isNoEnemyExists && isEnemyExist) {
+				surfaces.forEach(function (surface, index) {
+					if (surface.data && surface.data.closedDoor)
+						removals.push(index);
+				});
+
+				for (var i = 0; i < removals.length; i++)
+					surfaces.removeAt(removals[i] - i); // (- i) on purpose
+
+				isEnemyExist = false;
+			}
 
 			if (player.data && player.data.nextRoom)
 				self.moveNext = player.data.nextRoom;
@@ -420,6 +491,16 @@ function Room(data) {
 				x: 2 * halfDoorWidth,
 				y: wallThickness + 1
 			}, '#CCCCCC');
+
+			if (isEnemyExist) {
+				drawUtility.rectangle(ctx, {
+					x: size.x / 2 - halfDoorWidth - cameraPosition.x,
+					y: -cameraPosition.y
+				}, {
+					x: 2 * halfDoorWidth,
+					y: wallThickness / 2
+				}, '#A52A2A');
+			}
 		}
 		if (doors.s) {
 			drawUtility.rectangle(ctx, {
@@ -429,6 +510,16 @@ function Room(data) {
 				x: 2 * halfDoorWidth,
 				y: wallThickness + 1
 			}, '#CCCCCC');
+
+			if (isEnemyExist) {
+				drawUtility.rectangle(ctx, {
+					x: size.x / 2 - halfDoorWidth - cameraPosition.x,
+					y: size.y - wallThickness / 2 - cameraPosition.y
+				}, {
+					x: 2 * halfDoorWidth,
+					y: wallThickness / 2
+				}, '#A52A2A');
+			}
 		}
 		if (doors.e) {
 			drawUtility.rectangle(ctx, {
@@ -438,6 +529,16 @@ function Room(data) {
 				x: wallThickness + 1,
 				y: 2 * halfDoorWidth
 			}, '#CCCCCC');
+
+			if (isEnemyExist) {
+				drawUtility.rectangle(ctx, {
+					x: size.x - wallThickness / 2 - cameraPosition.x,
+					y: size.y / 2 - halfDoorWidth - cameraPosition.y
+				}, {
+					x: wallThickness / 2,
+					y: 2 * halfDoorWidth
+				}, '#A52A2A');
+			}
 		}
 		if (doors.w) {
 			drawUtility.rectangle(ctx, {
@@ -447,6 +548,16 @@ function Room(data) {
 				x: wallThickness + 1,
 				y: 2 * halfDoorWidth
 			}, '#CCCCCC');
+
+			if (isEnemyExist) {
+				drawUtility.rectangle(ctx, {
+					x: -cameraPosition.x,
+					y: size.y / 2 - halfDoorWidth - cameraPosition.y
+				}, {
+					x: wallThickness / 2,
+					y: 2 * halfDoorWidth
+				}, '#A52A2A');
+			}
 		}
 
 		entities.forEach(function (entity) {
