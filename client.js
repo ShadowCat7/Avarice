@@ -45,35 +45,92 @@ function draw() {
 		y: canvas.height
 	});
 
+	var mapWidth = 160;
+	var mapHeight = 100;
+
 	drawUtility.rectangle(ctx, {
-		x: canvas.width - 160,
+		x: canvas.width - mapWidth,
 		y: 0
 	}, {
-		x: 160,
-		y: 100
+		x: mapWidth,
+		y: mapHeight
 	}, '#998899');
+
+	var mapStyle = false;
+
+	var mapSizeX = roomMap.length;
+	var mapSizeY = 1;
+
+	for (var i = 0; i < roomMap.length; i++) {
+		if (roomMap[i] && mapSizeY < roomMap[i].length)
+			mapSizeY = roomMap[i].length;
+	}
+
+	if (mapStyle || mapSizeX < 7) {
+		var xDivisions = 22;
+		var xMargin = 4;
+		var mapRoomSizeX = 18;
+	}
+	else {
+		var xDivisions = Math.floor(mapWidth / (mapSizeX < 7 ? 7 : mapSizeX));
+		var xMargin = Math.floor(xDivisions * 0.2) || 1;
+		var mapRoomSizeX = xDivisions - xMargin;
+	}
+
+	if (mapStyle || mapSizeY < 7) {
+		var yDivisions = 16;
+		var yMargin = 4;
+		var mapRoomSizeY = 12;
+	}
+	else {
+		var yDivisions = Math.floor(mapHeight / (mapSizeY < 6 ? 6 : mapSizeY));
+		var yMargin = Math.floor(yDivisions * 0.2) || 1;
+		var mapRoomSizeY = yDivisions - yMargin;
+	}
 
 	for (var i = 0; i < roomMap.length; i++) {
 		if (roomMap[i]) {
 			for (var j = 0; j < roomMap[i].length; j++) {
 				if (roomMap[i][j]) {
 					var drawingRoom = roomMap[i][j];
-					var x = canvas.width - 89 + 22 * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
-					var y = 44 + 16 * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
+					var x;
+					var y;
 
-					if (x > canvas.width - 160 && y < 88) {
+					if (mapStyle) {
+						x = canvas.width - mapWidth / 2 - mapRoomSizeX / 2 + xDivisions * (drawingRoom.mapPosition.x - currentRoom.mapPosition.x);
+						y = mapHeight / 2 - mapRoomSizeY / 2 + yDivisions * (drawingRoom.mapPosition.y - currentRoom.mapPosition.y);
+					}
+					else {
+						x = canvas.width - mapWidth + xDivisions * drawingRoom.mapPosition.x;
+						if (mapSizeX < 7)
+							x += (xMargin + xDivisions * (7 - mapSizeX)) / 2;
+						y = yMargin + yDivisions * drawingRoom.mapPosition.y;
+						if (mapSizeY < 6)
+							y += (yMargin + yDivisions * (6 - mapSizeY)) / 2;
+					}
+
+					var roomColor = '#AAAAAA';
+					if (drawingRoom.type === roomTypes.item)
+						roomColor = '#FFFF00';
+					if (drawingRoom.type === roomTypes.boss)
+						roomColor = '#FF0000';
+					if (drawingRoom === currentRoom)
+						roomColor = '#FFFFFF';
+
+					if (x >= canvas.width - mapWidth && y < mapHeight - mapRoomSizeY) {
 						drawUtility.rectangle(ctx, {
 							x: x,
 							y: y
 						}, {
-							x: 18,
-							y: 12
-						}, drawingRoom === currentRoom ? '#FFFFFF' : '#AAAAAA');
+							x: mapRoomSizeX,
+							y: mapRoomSizeY
+						}, roomColor);
 					}
 				}
 			}
 		}
 	}
+	
 }
 
 function generateRoom(roomType, mapPosition) {
@@ -158,6 +215,7 @@ function generateRoom(roomType, mapPosition) {
 	return roomFactory.create({
 		size: roomData.size,
 		mapPosition: mapPosition,
+		type: roomType,
 		entities: entities,
 		surfaces: surfaces,
 		player: player,
@@ -192,57 +250,94 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
+	var bossRoomX = Math.floor(Math.random() * 2 + 1) * (Math.random() > 0.5 ? -1 : 1) * 2;
+	var bossRoomY = Math.floor(Math.random() * 2 + 1) * (Math.random() > 0.5 ? -1 : 1) * 2;
 	var creatingRoomMap = [generateRoom(roomTypes.start, { x: 0, y: 0 })];
-	var roomCount = 4 + Math.floor(Math.random() * 3);
+	var smallestX = bossRoomX < 0 ? bossRoomX : 0;
+	var smallestY = bossRoomY < 0 ? bossRoomY : 0;
+	var size = (Math.abs(bossRoomX) + Math.abs(bossRoomY)) / 2;
+	var oldLocation;
 	var location = { x: 0, y: 0 };
-	var directions = ['n', 's', 'e', 'w'];
-	var direction = null;
-	var itemRoomIndex = Math.floor(Math.random() * roomCount - 1);
-	var smallestX = 0;
-	var smallestY = 0;
+	var isItemRoomCreated = false;
 
-	for (var i = 0; i < roomCount; i++) {
-		var oldDirection = direction;
-		direction = directions[Math.floor(Math.random() * 4)];
+	for (var i = 0; i <= size; i++) {
+		var newLocationX = location.x;
+		if (bossRoomX < location.x)
+			newLocationX -= 2;
+		else if (bossRoomX > location.x)
+			newLocationX += 2;
 
-		if (direction === 'n' && oldDirection === 's'
-			|| direction === 's' && oldDirection === 'n'
-			|| direction === 'e' && oldDirection === 'w'
-			|| direction === 'w' && oldDirection === 'e') {
-			direction = oldDirection;
+		var newLocationY = location.y;
+		if (bossRoomY < location.y)
+			newLocationY -= 2;
+		else if (bossRoomY > location.y)
+			newLocationY += 2;
+
+		if (newLocationX !== location.x && newLocationY !== location.y) {
+			if (Math.random > 0.5)
+				newLocationX = location.x;
+			else
+				newLocationY = location.y;
 		}
 
-		if (direction === 'n') {
-			location.y--;
-			smallestY--;
-		}
-		else if (direction === 's') {
-			location.y++;
-		}
-		else if (direction === 'e') {
-			location.x--;
-			smallestX--;
-		}
-		else if (direction === 'w') {
-			location.x++;
+		if (oldLocation) {
+			creatingRoomMap.push(generateRoom(roomTypes.normal, {
+				x: location.x - (location.x - oldLocation.x) / 2,
+				y: location.y - (location.y - oldLocation.y) / 2
+			}));
+
+			creatingRoomMap.push(generateRoom(i === size ? roomTypes.boss : roomTypes.normal, {
+				x: location.x,
+				y: location.y
+			}));
 		}
 
-		var roomType = roomTypes.normal;
-		if (i === itemRoomIndex)
-			roomType = roomTypes.item;
-		if (i === roomCount - 1)
-			roomType = roomTypes.boss;
+		if (i !== size) {
+			var createNewSideRoom = function (x, y) {
+				var roomType = roomTypes.normal;
+				if (!isItemRoomCreated && (i === size - 1 || Math.random() < 0.1))
+					roomType = roomTypes.item;
 
-		creatingRoomMap.push(generateRoom(roomType, { x: location.x, y: location.y }));
+				if (!isItemRoomCreated && i === size - 1 || Math.random() < 0.5) {
+					creatingRoomMap.push(generateRoom(roomType, { x: x, y: y }));
+
+					if (smallestX > x)
+						smallestX = x;
+
+					if (smallestY > y)
+						smallestY = y;
+
+					if (roomType === roomTypes.item)
+						isItemRoomCreated = true;
+				}
+			}
+
+			if (newLocationX <= location.x && (!oldLocation || oldLocation && oldLocation.x <= location.x))
+				createNewSideRoom(location.x + 1, location.y);
+			if (newLocationX >= location.x && (!oldLocation || oldLocation && oldLocation.x >= location.x))
+				createNewSideRoom(location.x - 1, location.y);
+			if (newLocationY <= location.y && (!oldLocation || oldLocation && oldLocation.y <= location.y))
+				createNewSideRoom(location.x, location.y + 1);
+			if (newLocationY >= location.y && (!oldLocation || oldLocation && oldLocation.y >= location.y))
+				createNewSideRoom(location.x, location.y - 1);
+		}
+
+		oldLocation = location;
+
+		location = { x: newLocationX, y: newLocationY };
 	}
 
 	roomMap = [];
 	for (i = 0; i < creatingRoomMap.length; i++) {
 		var room = creatingRoomMap[i];
-		if (!roomMap[room.mapPosition.x - smallestX])
-			roomMap[room.mapPosition.x - smallestX] = [];
+		room.mapPosition = {
+			x: room.mapPosition.x - smallestX,
+			y: room.mapPosition.y - smallestY
+		};
+		if (!roomMap[room.mapPosition.x])
+			roomMap[room.mapPosition.x] = [];
 
-		roomMap[room.mapPosition.x - smallestX][room.mapPosition.y - smallestY] = room;
+		roomMap[room.mapPosition.x][room.mapPosition.y] = room;
 	}
 	
 	for (i = 0; i < roomMap.length; i++) {

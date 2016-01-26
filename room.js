@@ -5,6 +5,9 @@ var types = require('./types');
 var drawUtility = require('./utility/draw-utility');
 var vector = require('./utility/vector');
 
+var wallThickness = 50;
+var halfDoorWidth = 50;
+
 function Room(data) {
 	var self = this;
 
@@ -17,6 +20,7 @@ function Room(data) {
 		y: data.size.y
 	};
 	self.mapPosition = data.mapPosition;
+	self.type = data.type;
 
 	var doors = null;
 
@@ -78,41 +82,41 @@ function Room(data) {
 		if (doors.n) {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: 100,
-				x2: size.x / 2 - 60,
-				y2: 100
+				x: wallThickness,
+				y: wallThickness,
+				x2: size.x / 2 - halfDoorWidth,
+				y2: wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 - 60,
-				y: 100,
-				x2: size.x / 2 - 60,
+				x: size.x / 2 - halfDoorWidth,
+				y: wallThickness,
+				x2: size.x / 2 - halfDoorWidth,
 				y2: 0
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 + 60,
+				x: size.x / 2 + halfDoorWidth,
 				y: 0,
-				x2: size.x / 2 + 60,
-				y2: 100
+				x2: size.x / 2 + halfDoorWidth,
+				y2: wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 + 60,
-				y: 100,
-				x2: size.x - 100,
-				y2: 100
+				x: size.x / 2 + halfDoorWidth,
+				y: wallThickness,
+				x2: size.x - wallThickness,
+				y2: wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
-				x: size.x / 2 - 60,
+				x: size.x / 2 - halfDoorWidth,
 				y: 0,
-				x2: size.x / 2 + 60,
+				x2: size.x / 2 + halfDoorWidth,
 				y2: 0,
 				data: {
 					nextRoomTrigger: nextRoomTrigger,
@@ -124,10 +128,10 @@ function Room(data) {
 		else {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: 100,
-				x2: size.x - 100,
-				y2: 100,
+				x: wallThickness,
+				y: wallThickness,
+				x2: size.x - wallThickness,
+				y2: wallThickness,
 				/*drawFunc: function (surface, ctx) {
 					var path = new Path2D();
 					path.moveTo(surface.x, surface.y);
@@ -143,42 +147,42 @@ function Room(data) {
 		if (doors.e) {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: 100,
-				x2: size.x - 100,
-				y2: size.y / 2 - 60
+				x: size.x - wallThickness,
+				y: wallThickness,
+				x2: size.x - wallThickness,
+				y2: size.y / 2 - halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: size.y / 2 - 60,
+				x: size.x - wallThickness,
+				y: size.y / 2 - halfDoorWidth,
 				x2: size.x,
-				y2: size.y / 2 - 60
+				y2: size.y / 2 - halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
 				x: size.x,
-				y: size.y / 2 + 60,
-				x2: size.x - 100,
-				y2: size.y / 2 + 60
+				y: size.y / 2 + halfDoorWidth,
+				x2: size.x - wallThickness,
+				y2: size.y / 2 + halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: size.y / 2 + 60,
-				x2: size.x - 100,
-				y2: size.y - 100
+				x: size.x - wallThickness,
+				y: size.y / 2 + halfDoorWidth,
+				x2: size.x - wallThickness,
+				y2: size.y - wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
 				x: size.x,
-				y: size.y / 2 - 60,
+				y: size.y / 2 - halfDoorWidth,
 				x2: size.x,
-				y2: size.y / 2 + 60,
+				y2: size.y / 2 + halfDoorWidth,
 				data: {
 					nextRoomTrigger: nextRoomTrigger,
 					room: doors.e,
@@ -202,51 +206,51 @@ function Room(data) {
 		else {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: 100,
-				x2: size.x - 100,
-				y2: size.y - 100
+				x: size.x - wallThickness,
+				y: wallThickness,
+				x2: size.x - wallThickness,
+				y2: size.y - wallThickness
 			}));
 		}
 
 		if (doors.s) {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: size.y - 100,
-				x2: size.x / 2 + 60,
-				y2: size.y - 100
+				x: size.x - wallThickness,
+				y: size.y - wallThickness,
+				x2: size.x / 2 + halfDoorWidth,
+				y2: size.y - wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 + 60,
-				y: size.y - 100,
-				x2: size.x / 2 + 60,
+				x: size.x / 2 + halfDoorWidth,
+				y: size.y - wallThickness,
+				x2: size.x / 2 + halfDoorWidth,
 				y2: size.y
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 - 60,
+				x: size.x / 2 - halfDoorWidth,
 				y: size.y,
-				x2: size.x / 2 - 60,
-				y2: size.y - 100
+				x2: size.x / 2 - halfDoorWidth,
+				y2: size.y - wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x / 2 - 60,
-				y: size.y - 100,
-				x2: 100,
-				y2: size.y - 100
+				x: size.x / 2 - halfDoorWidth,
+				y: size.y - wallThickness,
+				x2: wallThickness,
+				y2: size.y - wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
-				x: size.x / 2 + 60,
+				x: size.x / 2 + halfDoorWidth,
 				y: size.y,
-				x2: size.x / 2 - 60,
+				x2: size.x / 2 - halfDoorWidth,
 				y2: size.y,
 				data: {
 					nextRoomTrigger: nextRoomTrigger,
@@ -258,52 +262,52 @@ function Room(data) {
 		else {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: size.x - 100,
-				y: size.y - 100,
-				x2: 100,
-				y2: size.y - 100
+				x: size.x - wallThickness,
+				y: size.y - wallThickness,
+				x2: wallThickness,
+				y2: size.y - wallThickness
 			}));
 		}
 
 		if (doors.w) {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: size.y - 100,
-				x2: 100,
-				y2: size.y / 2 + 60
+				x: wallThickness,
+				y: size.y - wallThickness,
+				x2: wallThickness,
+				y2: size.y / 2 + halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: size.y / 2 + 60,
+				x: wallThickness,
+				y: size.y / 2 + halfDoorWidth,
 				x2: 0,
-				y2: size.y / 2 + 60
+				y2: size.y / 2 + halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
 				x: 0,
-				y: size.y / 2 - 60,
-				x2: 100,
-				y2: size.y / 2 - 60
+				y: size.y / 2 - halfDoorWidth,
+				x2: wallThickness,
+				y2: size.y / 2 - halfDoorWidth
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: size.y / 2 - 60,
-				x2: 100,
-				y2: 100
+				x: wallThickness,
+				y: size.y / 2 - halfDoorWidth,
+				x2: wallThickness,
+				y2: wallThickness
 			}));
 
 			surfaces.append(surfaceFactory.create({
 				type: types.openDoor,
 				x: 0,
-				y: size.y / 2 + 60,
+				y: size.y / 2 + halfDoorWidth,
 				x2: 0,
-				y2: size.y / 2 - 60,
+				y2: size.y / 2 - halfDoorWidth,
 				data: {
 					nextRoomTrigger: nextRoomTrigger,
 					room: doors.w,
@@ -314,10 +318,10 @@ function Room(data) {
 		else {
 			surfaces.append(surfaceFactory.create({
 				type: types.wall,
-				x: 100,
-				y: size.y - 100,
-				x2: 100,
-				y2: 100
+				x: wallThickness,
+				y: size.y - wallThickness,
+				x2: wallThickness,
+				y2: wallThickness
 			}));
 		}
 	}
@@ -401,47 +405,47 @@ function Room(data) {
 		}, viewPortSize, '#888888');
 
 		drawUtility.rectangle(ctx, {
-			x: 100 - cameraPosition.x,
-			y: 100 - cameraPosition.y
+			x: wallThickness - cameraPosition.x,
+			y: wallThickness - cameraPosition.y
 		}, {
-			x: size.x - 200,
-			y: size.y - 200
+			x: size.x - 2 * wallThickness,
+			y: size.y - 2 * wallThickness
 		}, '#CCCCCC');
 
 		if (doors.n) {
 			drawUtility.rectangle(ctx, {
-				x: size.x / 2 - 60 - cameraPosition.x,
+				x: size.x / 2 - halfDoorWidth - cameraPosition.x,
 				y: -cameraPosition.y
 			}, {
-				x: 120,
-				y: 110
+				x: 2 * halfDoorWidth,
+				y: wallThickness + 1
 			}, '#CCCCCC');
 		}
 		if (doors.s) {
 			drawUtility.rectangle(ctx, {
-				x: size.x / 2 - 60 - cameraPosition.x,
-				y: size.y - 110 - cameraPosition.y
+				x: size.x / 2 - halfDoorWidth - cameraPosition.x,
+				y: size.y - (wallThickness + 1) - cameraPosition.y
 			}, {
-				x: 120,
-				y: 110
+				x: 2 * halfDoorWidth,
+				y: wallThickness + 1
 			}, '#CCCCCC');
 		}
 		if (doors.e) {
 			drawUtility.rectangle(ctx, {
-				x: size.x - 110 - cameraPosition.x,
-				y: size.y / 2 - 60 - cameraPosition.y
+				x: size.x - (wallThickness + 1) - cameraPosition.x,
+				y: size.y / 2 - halfDoorWidth - cameraPosition.y
 			}, {
-				x: 110,
-				y: 120
+				x: wallThickness + 1,
+				y: 2 * halfDoorWidth
 			}, '#CCCCCC');
 		}
 		if (doors.w) {
 			drawUtility.rectangle(ctx, {
 				x: -cameraPosition.x,
-				y: size.y / 2 - 60 - cameraPosition.y
+				y: size.y / 2 - halfDoorWidth - cameraPosition.y
 			}, {
-				x: 110,
-				y: 120
+				x: wallThickness + 1,
+				y: 2 * halfDoorWidth
 			}, '#CCCCCC');
 		}
 
